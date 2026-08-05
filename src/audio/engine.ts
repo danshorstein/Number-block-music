@@ -40,6 +40,21 @@ const SAMPLE_MAP: Record<string, string> = {
 /** How long a tapped note rings, in seconds. Long enough to feel like a real piano. */
 const TAP_DURATION = 1.6
 
+/**
+ * Safari-only, and not in lib.dom yet. iOS puts Web Audio in the "ambient" session by
+ * default, which the ring/silent switch mutes — HTML <audio> is exempt, Web Audio is
+ * not. Declaring "playback" is the supported way to stay audible with the switch on.
+ */
+interface AudioSession {
+  type: 'auto' | 'playback' | 'transient' | 'transient-solo' | 'ambient' | 'play-and-record'
+}
+
+declare global {
+  interface Navigator {
+    audioSession?: AudioSession
+  }
+}
+
 let sampler: Tone.Sampler | null = null
 let loading: Promise<void> | null = null
 
@@ -55,6 +70,12 @@ export function unlock(): Promise<void> {
   if (loading) return loading
 
   loading = (async () => {
+    // Set before starting the context, so the very first note is already on the right
+    // session. Silently absent on every browser except Safari 16.4+.
+    if (navigator.audioSession) {
+      navigator.audioSession.type = 'playback'
+    }
+
     await Tone.start()
 
     // Trade scheduling headroom for immediacy. Taps are triggered directly rather than

@@ -65,7 +65,15 @@ the repo name without changing `BASE` in `vite.config.ts` ships a blank white sc
 - **Notes fire on `pointerdown`, never `click`,** and Tone's `lookAhead` is dropped to
   near zero. Latency here is not a polish item; it breaks the metaphor.
 - **The tap-to-start splash is required,** not decorative. iOS Safari will not start an
-  audio context outside a user gesture.
+  audio context outside a user gesture — and it must unlock on **`click`, never
+  `pointerdown`**. iOS grants user activation when the finger *lifts*, so a pointerdown
+  unlock leaves the context suspended and the entire app silent on iPhone while working
+  fine in every other browser. `preventDefault()` there makes it worse by suppressing
+  the click that would have granted activation. A source-level test guards this,
+  because no browser available to CI reproduces it.
+- **iOS mutes Web Audio when the ring/silent switch is on** (HTML `<audio>` is exempt,
+  Web Audio is not), so the engine declares `navigator.audioSession.type = 'playback'`.
+  That API is Safari 16.4+; below that, the switch has to be flipped by hand.
 - **Keep the CSS reset inside `@layer base`.** Unlayered rules outrank every layered
   one, so an unlayered `button { background: none }` silently kills Tailwind's `bg-*`
   and `border-*` utilities and the buttons render invisible.
