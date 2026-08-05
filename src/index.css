@@ -1,0 +1,84 @@
+@import 'tailwindcss';
+
+/*
+ * Sizing is driven entirely by these three custom properties, because the binding
+ * constraint changes with the device. On a phone in landscape the limit is height —
+ * a tower of eight cubes has to fit above the strip and the buttons in ~390px. On a
+ * tablet the limit is width. min() lets one rule serve both without media queries.
+ */
+:root {
+  --cube: min(6.4vw, 6dvh, 56px);
+  --palette-h: calc(var(--cube) * 8.6);
+  /* Half-size, not a token: the strip has to be readable as a skyline from across the
+     room, because the melody's shape is the thing being taught. */
+  --mini: calc(var(--cube) * 0.5);
+  --strip-h: calc(var(--mini) * 8 + 0.6rem);
+
+  /* Buttons are pills, not circles: height is scarce in landscape but width is not,
+     so they stay comfortably tappable by growing sideways (§6, ≥60px of target). */
+  --btn-h: min(11dvh, 56px);
+  --btn-w: min(18vw, 96px);
+  --btn-lg-h: min(13dvh, 68px);
+  --btn-lg-w: min(22vw, 116px);
+
+  --tap: 60px;
+  --splash-cube: min(6vw, 3.2dvh, 30px);
+
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #1b1136;
+  color: #fff;
+  font-family: 'Nunito', 'Baloo 2', ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
+  /* Nothing in the child UI is meant to be selected, dragged, or long-pressed into a
+     context menu, and nothing should rubber-band or pull-to-refresh. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+/* This reset MUST stay inside @layer base. Unlayered rules outrank every layered one,
+   so an unlayered `button { background: none }` silently beats Tailwind's bg-* and
+   border-* utilities and the buttons render invisible. */
+@layer base {
+  button {
+    font: inherit;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    color: inherit;
+  }
+}
+
+/* The rotate nudge is for small screens held upright, and nothing else. */
+.portrait-only {
+  display: none;
+}
+
+/* Phones only. The breakpoint is the actual constraint: eight towers at a comfortable
+   size need ~480px of width, so anything below ~600px has to be turned sideways, while
+   a tablet in portrait (768px and up) has room to spare and must never see this. */
+@media (orientation: portrait) and (max-width: 600px) {
+  .portrait-only {
+    display: grid;
+    place-items: center;
+  }
+}
+
+/* Motion is the reward here (§6), so it is never removed outright — only calmed. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
