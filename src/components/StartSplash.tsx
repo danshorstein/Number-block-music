@@ -29,8 +29,13 @@ export function StartSplash({ status, onStart }: StartSplashProps) {
       <button
         type="button"
         aria-label="Tap to start"
-        onPointerDown={(event) => {
-          event.preventDefault()
+        // This is the ONE control in the app that must not unlock on pointerdown.
+        // On iOS, pointerdown comes from touchstart, which does not grant user
+        // activation — WebKit only grants it when the finger lifts. Calling
+        // preventDefault() there also suppresses the click that would have granted it,
+        // so the audio context never resumes and every later tap is silent.
+        // Everything else stays on pointerdown for latency; by then audio is unlocked.
+        onClick={() => {
           if (status !== 'loading') onStart()
         }}
         className="flex flex-col items-center gap-[4vh] p-8 focus-visible:outline
