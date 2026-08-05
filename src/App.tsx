@@ -8,6 +8,7 @@ import { RotateNudge } from './components/RotateNudge'
 import { ParentArea } from './components/ParentArea'
 import { TEMPOS, useAppState } from './state/useAppState'
 import {
+  contextState,
   playDegree,
   playSequence,
   setVolume,
@@ -25,6 +26,7 @@ export default function App() {
 
   const [started, setStarted] = useState(false)
   const [audioStatus, setAudioStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [audioError, setAudioError] = useState<string | undefined>(undefined)
   const [playingIndex, setPlayingIndex] = useState<number | null>(null)
   const [pulses, setPulses] = useState<Record<string, number>>({})
   const lastMelodyId = useRef<string | undefined>(undefined)
@@ -43,7 +45,11 @@ export default function App() {
       setVolume(settings.volume)
       setStarted(true)
       setAudioStatus('idle')
-    } catch {
+    } catch (error) {
+      // Name the failure on screen. This runs on a phone with no console attached, so
+      // an unlabelled failure is indistinguishable from a hang.
+      const detail = error instanceof Error ? error.message : String(error)
+      setAudioError(`${detail} (audio: ${contextState()})`)
       setAudioStatus('error')
     }
   }, [settings.volume])
@@ -150,7 +156,9 @@ export default function App() {
       </main>
 
       <AnimatePresence>
-        {!started && <StartSplash status={audioStatus} onStart={handleStart} />}
+        {!started && (
+          <StartSplash status={audioStatus} errorDetail={audioError} onStart={handleStart} />
+        )}
       </AnimatePresence>
     </div>
   )

@@ -62,38 +62,127 @@ export function isReady(): boolean {
   return sampler !== null && sampler.loaded
 }
 
+/** Nothing in the unlock path may await without a bound — see unlock(). */
+const CONTEXT_TIMEOUT_MS = 4_000
+const SAMPLE_TIMEOUT_MS = 25_000
+
+function withTimeout<T>(work: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    work,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms),
+    ),
+  ])
+}
+
 /**
- * Start the audio context and decode every sample. Must be called from a user gesture.
- * Safe to call more than once — later calls join the first load.
+ * Safari shipped promise-based decodeAudioData late and still honours the older
+ * callback form, so support both rather than betting on which one this phone has.
+ */
+function decodeAudio(bytes: ArrayBuffer): Promise<AudioBuffer> {
+  const raw = Tone.getContext().rawContext as unknown as BaseAudioContext
+  return new Promise<AudioBuffer>((resolve, reject) => {
+    const maybePromise = raw.decodeAudioData(bytes, resolve, reject) as
+      | Promise<AudioBuffer>
+      | undefined
+    if (maybePromise && typeof maybePromise.then === 'function') {
+      maybePromise.then(resolve, reject)
+    }
+  })
+}
+
+/**
+ * Fetch and decode each sample by hand rather than handing URLs to Tone.Sampler.
+ * Sampler reports load failures through an onload/onerror pair that can leave the
+ * caller waiting forever if neither fires; doing it here means every failure has a
+ * message naming the file, which is the difference between a fixable bug report and
+ * an infinite spinner on someone's phone.
+ */
+async function loadSamples(): Promise<Record<string, AudioBuffer>> {
+  const baseUrl = `${import.meta.env.BASE_URL}audio/piano/`
+
+  const entries = await Promise.all(
+    Object.entries(SAMPLE_MAP).map(async ([note, file]) => {
+      const url = baseUrl + file
+      const response = await withTimeout(fetch(url), SAMPLE_TIMEOUT_MS, file).catch(() => {
+        throw new Error(`Could not download ${url}`)
+      })
+      if (!response.ok) {
+        throw new Error(`${url} returned HTTP ${response.status}`)
+      }
+
+      const bytes = await response.arrayBuffer()
+      const buffer = await decodeAudio(bytes).catch(() => {
+        throw new Error(`Could not decode ${file} — this browser may not accept the audio`)
+      })
+
+      return [note, buffer] as const
+    }),
+  )
+
+  return Object.fromEntries(entries)
+}
+
+/**
+ * Start the audio context and decode every sample. Must be called from a user gesture,
+ * and specifically from one iOS counts as an activation — a click, not a pointerdown.
+ * Safe to call more than once; later calls join the first load.
+ *
+ * Everything here is bounded. Tone builds its AudioContext at import time, before any
+ * gesture exists, and on iOS resume() against such a context can stay pending forever
+ * rather than rejecting — which strands the splash on its loading animation with no
+ * way to tell what went wrong. A context that will not start is survivable; an
+ * unbounded await is not.
  */
 export function unlock(): Promise<void> {
   if (loading) return loading
 
   loading = (async () => {
-    // Set before starting the context, so the very first note is already on the right
-    // session. Silently absent on every browser except Safari 16.4+.
+    // Before starting the context, so the first note is already on the right session.
+    // Absent on every browser except Safari 16.4+.
     if (navigator.audioSession) {
       navigator.audioSession.type = 'playback'
     }
 
-    await Tone.start()
+    // Best effort. If the context refuses to start we still load the samples and let
+    // the user in — a later tap often resumes it, and a visible app beats a spinner.
+    await withTimeout(Tone.start(), CONTEXT_TIMEOUT_MS, 'Starting audio').catch(() => undefined)
+
+    // Tone.start() can resolve with the context still parked. Nudge the raw context
+    // directly — we are still inside the activation the click granted.
+    const context = Tone.getContext()
+    if (context.state !== 'running') {
+      const raw = context.rawContext as unknown as BaseAudioContext & { resume?: () => Promise<void> }
+      await withTimeout(
+        Promise.resolve(raw.resume?.()),
+        CONTEXT_TIMEOUT_MS,
+        'Resuming audio',
+      ).catch(() => undefined)
+    }
 
     // Trade scheduling headroom for immediacy. Taps are triggered directly rather than
     // scheduled ahead, so the default 100ms of lookAhead is pure latency here.
-    Tone.getContext().lookAhead = 0.01
+    context.lookAhead = 0.01
 
-    await new Promise<void>((resolve, reject) => {
-      sampler = new Tone.Sampler({
-        urls: SAMPLE_MAP,
-        baseUrl: `${import.meta.env.BASE_URL}audio/piano/`,
-        release: 1,
-        onload: () => resolve(),
-        onerror: (error) => reject(error),
-      }).toDestination()
-    })
+    const buffers = await loadSamples()
+    sampler = new Tone.Sampler({ urls: buffers, release: 1 }).toDestination()
   })()
 
+  // A failed attempt must not poison every later one, or "tap to retry" can't work.
+  loading.catch(() => {
+    loading = null
+  })
+
   return loading
+}
+
+/** Diagnostic for the error screen: did the context actually start? */
+export function contextState(): string {
+  try {
+    return Tone.getContext().state
+  } catch {
+    return 'unavailable'
+  }
 }
 
 /** Play a single degree right now — the tap path (F2). */
