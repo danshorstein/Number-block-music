@@ -1,0 +1,272 @@
+/*
+ * Print styling. Physical units throughout for anything that has to match a real
+ * object — the stickers land on real piano keys, so millimetres are the honest unit
+ * and a page that silently scales is a page that produces stickers of the wrong size.
+ */
+
+@page {
+  size: letter portrait;
+  margin: 14mm;
+}
+
+:root {
+  --ink: #1c1c22;
+  --muted: #5b5b66;
+  --rule: #d8d8e0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #eceaf2;
+  color: var(--ink);
+  font-family: 'Nunito', ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+/* ---------- screen-only chrome ---------- */
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background: #1b1136;
+  color: #fff;
+}
+
+.toolbar-title {
+  font-weight: 800;
+}
+
+.toolbar-hint {
+  margin-left: auto;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.toolbar button {
+  padding: 0.5rem 1.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: #34d399;
+  color: #05301f;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* ---------- pages ---------- */
+
+.page {
+  width: 190mm;
+  margin: 1.5rem auto;
+  padding: 12mm;
+  background: #fff;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.12);
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.6rem;
+}
+
+h2 {
+  margin: 1.6rem 0 0.6rem;
+  font-size: 1.1rem;
+}
+
+.lede {
+  margin: 0 0 1rem;
+  max-width: 60ch;
+}
+
+.footnote {
+  margin-top: 1.5rem;
+  color: #55555f;
+  font-size: 0.85rem;
+  max-width: 66ch;
+}
+
+ul {
+  max-width: 62ch;
+}
+
+li {
+  margin-bottom: 0.35rem;
+}
+
+/* ---------- calibration ---------- */
+
+.calibration {
+  margin: 1rem 0 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e0c200;
+  border-radius: 8px;
+  background: #fffdf0;
+}
+
+.ruler {
+  position: relative;
+  width: 100mm;
+  height: 10mm;
+  border: 1.5pt solid var(--ink);
+  border-top: 0;
+}
+
+.ruler-label {
+  position: absolute;
+  top: 2mm;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9pt;
+  white-space: nowrap;
+}
+
+.warn {
+  margin: 0.6rem 0 0;
+  font-size: 0.85rem;
+  max-width: 62ch;
+}
+
+/* ---------- stickers ---------- */
+
+.sticker-row {
+  display: flex;
+  gap: 5.5mm; /* 23.5mm key pitch minus the 18mm dot */
+  margin-bottom: 6mm;
+}
+
+.sticker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 18mm;
+  height: 18mm;
+  border-radius: 50%;
+  background: var(--dot);
+  color: var(--ink);
+  /* A cutting guide that survives a black-and-white printer. */
+  outline: 0.4pt dashed rgba(0, 0, 0, 0.35);
+  outline-offset: 1.6mm;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.sticker-degree {
+  font-size: 15pt;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.sticker-letter {
+  font-size: 8pt;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+/* ---------- chart ---------- */
+
+.chart {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 130mm;
+}
+
+.chart th,
+.chart td {
+  padding: 4pt 8pt;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.chart th {
+  font-size: 9pt;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6a6a74;
+}
+
+.swatch {
+  display: inline-grid;
+  place-items: center;
+  width: 11mm;
+  height: 11mm;
+  border-radius: 3mm;
+  font-weight: 900;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.letter {
+  font-size: 14pt;
+  font-weight: 800;
+}
+
+.tower {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 1px;
+}
+
+.tower i {
+  width: 7mm;
+  height: 3.5mm;
+  border-radius: 1mm;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ---------- songbook ---------- */
+
+.song-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+}
+
+.staves {
+  margin-top: 0.5rem;
+}
+
+.system {
+  margin-bottom: 2mm;
+}
+
+.system svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------- print ---------- */
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .toolbar {
+    display: none;
+  }
+
+  .page {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}

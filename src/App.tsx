@@ -8,6 +8,7 @@ import { RotateNudge } from './components/RotateNudge'
 import { ParentArea } from './components/ParentArea'
 import { TEMPOS, useAppState } from './state/useAppState'
 import {
+  contextState,
   playDegree,
   playSequence,
   setVolume,
@@ -18,13 +19,32 @@ import {
 import { speakDegree, speakLetter } from './audio/voice'
 import { pickMelody } from './music/melodies'
 import { REST, degreeToLetter, isDegree, type Degree } from './music/scale'
+import { ChallengeMenu } from './components/ChallengeMenu'
+import { ChallengeScreen } from './components/ChallengeScreen'
+import type { ChallengeId } from './challenges/generate'
 
 export default function App() {
-  const { slots, settings, bpm, isEmpty, append, removeAt, clear, setStrip, updateSettings } =
-    useAppState()
+  const {
+    slots,
+    settings,
+    progress,
+    bpm,
+    isEmpty,
+    append,
+    removeAt,
+    clear,
+    setStrip,
+    updateSettings,
+    recordStars,
+  } = useAppState()
+
+  /** Free play, the challenge list, or one challenge in progress. */
+  const [view, setView] = useState<'sandbox' | 'menu' | 'challenge'>('sandbox')
+  const [activeChallenge, setActiveChallenge] = useState<ChallengeId | null>(null)
 
   const [started, setStarted] = useState(false)
   const [audioStatus, setAudioStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [audioError, setAudioError] = useState<string | undefined>(undefined)
   const [playingIndex, setPlayingIndex] = useState<number | null>(null)
   const [pulses, setPulses] = useState<Record<string, number>>({})
   const lastMelodyId = useRef<string | undefined>(undefined)
@@ -43,7 +63,11 @@ export default function App() {
       setVolume(settings.volume)
       setStarted(true)
       setAudioStatus('idle')
-    } catch {
+    } catch (error) {
+      // Name the failure on screen. This runs on a phone with no console attached, so
+      // an unlabelled failure is indistinguishable from a hang.
+      const detail = error instanceof Error ? error.message : String(error)
+      setAudioError(`${detail} (audio: ${contextState()})`)
       setAudioStatus('error')
     }
   }, [settings.volume])
@@ -117,10 +141,55 @@ export default function App() {
   return (
     <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#1b1136]">
       <RotateNudge />
-      <ParentArea settings={settings} onChange={updateSettings} />
+      {view === 'sandbox' && <ParentArea settings={settings} onChange={updateSettings} />}
+
+      {/* The way in to the challenges: a star, no words (§6). */}
+      {view === 'sandbox' && (
+        <button
+          type="button"
+          aria-label="Challenges"
+          onPointerDown={(event) => {
+            event.preventDefault()
+            setView('menu')
+          }}
+          className="absolute top-2 left-2 z-30 grid h-11 w-11 place-items-center rounded-full
+                     bg-white/10 text-amber-300"
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+        >
+          <svg viewBox="0 0 24 24" className="h-6 w-6">
+            <path
+              d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5L12 17.5l-5.8 3.05 1.1-6.5-4.7-4.6 6.5-.95z"
+              fill="currentColor"
+            />
+          </svg>
+        </button>
+      )}
+
+      {view === 'menu' && (
+        <ChallengeMenu
+          progress={progress}
+          onPick={(id) => {
+            setActiveChallenge(id)
+            setView('challenge')
+          }}
+          onBack={() => setView('sandbox')}
+        />
+      )}
+
+      {view === 'challenge' && activeChallenge && (
+        <ChallengeScreen
+          id={activeChallenge}
+          musicKey={settings.key}
+          bpm={bpm}
+          earned={progress[activeChallenge] ?? 0}
+          onEarn={(stars) => recordStars(activeChallenge, stars)}
+          onBack={() => setView('menu')}
+        />
+      )}
 
       {/* Centered rather than bottom-aligned: on a tablet the three rows only fill
           about two thirds of the height, and hugging the bottom looks like a bug. */}
+      {view === 'sandbox' && (
       <main className="flex min-h-0 flex-1 flex-col justify-center gap-[1.6vh] pt-2 pb-[2.5vh]">
         <Palette
           displayMode={settings.displayMode}
@@ -148,9 +217,12 @@ export default function App() {
           onSurprise={handleSurprise}
         />
       </main>
+      )}
 
       <AnimatePresence>
-        {!started && <StartSplash status={audioStatus} onStart={handleStart} />}
+        {!started && (
+          <StartSplash status={audioStatus} errorDetail={audioError} onStart={handleStart} />
+        )}
       </AnimatePresence>
     </div>
   )

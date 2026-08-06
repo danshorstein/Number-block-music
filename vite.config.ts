@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -10,6 +11,15 @@ const BASE = '/Number-block-music/'
 
 export default defineConfig({
   base: BASE,
+  build: {
+    rollupOptions: {
+      input: {
+        // The kid's app, and the printable pack that carries it to the real piano (§8.4).
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        print: fileURLToPath(new URL('./print/index.html', import.meta.url)),
+      },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),

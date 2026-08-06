@@ -171,9 +171,10 @@ function RestGlyph({ cubeSize, ink }: { cubeSize: string; ink: string }) {
         paddingBottom: `calc(${cubeSize} * 0.08)`,
       }}
     >
+      {/* Sized through style, not width/height attributes: SVG attributes take plain
+          lengths and silently reject calc(). */}
       <svg
-        width={`calc(${cubeSize} * 0.5)`}
-        height={`calc(${cubeSize} * 0.5)`}
+        style={{ width: `calc(${cubeSize} * 0.5)`, height: `calc(${cubeSize} * 0.5)` }}
         viewBox="0 0 24 24"
         fill="none"
       >

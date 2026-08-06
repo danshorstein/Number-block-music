@@ -15,10 +15,12 @@ import { colorFor } from '../music/colors'
 
 interface StartSplashProps {
   status: 'idle' | 'loading' | 'error'
+  /** Parent-facing detail, shown only when something actually broke. */
+  errorDetail?: string
   onStart: () => void
 }
 
-export function StartSplash({ status, onStart }: StartSplashProps) {
+export function StartSplash({ status, errorDetail, onStart }: StartSplashProps) {
   return (
     <motion.div
       className="fixed inset-0 z-50 grid place-items-center bg-[#1b1136]"
@@ -88,8 +90,13 @@ export function StartSplash({ status, onStart }: StartSplashProps) {
         )}
 
         {status === 'error' && (
-          <span className="text-sm text-white/70">
-            Audio could not load — check the connection and tap again.
+          <span className="max-w-xs text-center text-sm text-white/70">
+            Audio could not start. Tap to try again.
+            {errorDetail && (
+              <span className="mt-2 block font-mono text-xs break-words text-white/45">
+                {errorDetail}
+              </span>
+            )}
           </span>
         )}
       </button>

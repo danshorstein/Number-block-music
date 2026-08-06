@@ -15,10 +15,19 @@ interface PaletteProps {
   musicKey: 'C' | 'D' | 'Eb' | 'F' | 'G'
   pulses: Record<string, number>
   disabled?: boolean
+  /** Challenges never ask for a rest, so the pad would only be a dead end there. */
+  showRest?: boolean
   onPick: (value: Degree | typeof REST) => void
 }
 
-export function Palette({ displayMode, musicKey, pulses, disabled, onPick }: PaletteProps) {
+export function Palette({
+  displayMode,
+  musicKey,
+  pulses,
+  disabled,
+  showRest = true,
+  onPick,
+}: PaletteProps) {
   return (
     <div className="flex w-full items-end justify-center gap-[0.6vw] px-2">
       {DEGREES.map((degree) => (
@@ -39,16 +48,18 @@ export function Palette({ displayMode, musicKey, pulses, disabled, onPick }: Pal
       ))}
 
       {/* Set apart from the staircase, because silence is not a pitch. */}
-      <div className="ml-[1.5vw] flex h-full items-end">
-        <PaletteColumn label="Rest" disabled={disabled} onPick={() => onPick(REST)}>
-          <BlockTower
-            degree={null}
-            cubeSize="var(--cube)"
-            showFace={false}
-            pulse={pulses[REST] ?? 0}
-          />
-        </PaletteColumn>
-      </div>
+      {showRest && (
+        <div className="ml-[1.5vw] flex h-full items-end">
+          <PaletteColumn label="Rest" disabled={disabled} onPick={() => onPick(REST)}>
+            <BlockTower
+              degree={null}
+              cubeSize="var(--cube)"
+              showFace={false}
+              pulse={pulses[REST] ?? 0}
+            />
+          </PaletteColumn>
+        </div>
+      )}
     </div>
   )
 }
