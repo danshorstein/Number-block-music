@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/Number-block-music/sw.js', { scope: '/Number-block-music/' })})}
