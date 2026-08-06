@@ -4,9 +4,18 @@
  * and a page that silently scales is a page that produces stickers of the wrong size.
  */
 
+/*
+ * size: auto, not a named paper. Declaring `letter` on a printer loaded with A4 makes
+ * the browser scale the whole page down to fit — about 2.7% — which silently shrinks
+ * every sticker below the key width it was measured for. Taking whatever paper is
+ * actually loaded keeps millimetres meaning millimetres.
+ */
 @page {
-  size: letter portrait;
-  margin: 14mm;
+  size: auto;
+  /* 12mm, not 14: a row of eight stickers is 182.5mm across (8 x 18mm + 7 x 5.5mm),
+     and A4 at 14mm margins leaves only 182mm — half a millimetre short, enough for the
+     browser to scale the page and undo the whole point. */
+  margin: 12mm;
 }
 
 :root {
