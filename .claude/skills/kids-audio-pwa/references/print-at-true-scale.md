@@ -12,10 +12,17 @@ finds out only after cutting.
 Specify anything that touches the real object in millimetres, not pixels:
 
 ```css
-@page { size: letter portrait; margin: 14mm; }
+@page { size: auto; margin: 14mm; }   /* see below — never name a paper size */
 .sticker { width: 18mm; height: 18mm; }
 .sticker-row { gap: 5.5mm; }   /* key pitch (23.5mm) minus the dot width */
 ```
+
+**Do not declare a named paper size.** `size: letter` on a printer loaded with A4 (or
+the reverse) makes the browser scale the whole page to fit — roughly 2.7% between those
+two — and every millimetre you specified silently becomes something else. `size: auto`
+takes whatever paper is actually loaded. For the same reason, keep the content width
+inside the narrower of the two you might hit: A4 is 210mm wide, so with 14mm margins
+anything over ~182mm will be scaled down on A4 even though it fits Letter.
 
 Then put a **calibration ruler** on the page — a box of a known width with its length
 printed inside it, and an instruction to measure it before cutting:
