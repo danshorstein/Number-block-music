@@ -25,8 +25,35 @@ built on top of it.
 | — | A rest pad, so silence is expressible and the tunes phrase correctly |
 | — | PWA: installs to the home screen, plays offline, no network calls after load |
 
-Not built yet: the challenges (F9–F14), the print-at-home piano stickers, and the
-teacher one-pager. Those are Milestone 2 and 3, and they wait on him liking this.
+### Challenges (F9–F14)
+
+Reached by the star in the corner. Five challenges, three stars each, stars counting
+rounds finished rather than rounds got right.
+
+| | |
+|---|---|
+| F9 | **Echo Me** — a 2–4 block phrase plays; he rebuilds it |
+| F10 | **Fill the Staircase** — put 1 through 8 in order |
+| F11 | **Which One Am I?** — one note plays; find its tower |
+| F12 | **Finish the Song** — a melody with its last blocks missing |
+| F13 | **Name That Block** — the same test in letters, the transfer test |
+| F14 | No streaks, no timers, no loss states. A wrong block simply doesn't land, and the note that belongs there is played so his ear gets the answer instead of a buzzer |
+
+### The print pack — `/print/`
+
+Linked from the parent area. §8.4 calls the stickers the highest-leverage deliverable
+in the project, and this is that plus the rest of the bridge to the real instrument:
+
+- **Key stickers** at true physical scale (18mm dots on 23.5mm key spacing), with a
+  calibration ruler — if that line doesn't measure 100mm, the print dialog scaled the
+  page and the stickers won't fit
+- **Music-stand chart** — degree, letter, colour, height
+- **One-page teacher explainer**, so "play me a three" means something in a lesson
+- **Six songs in real staff notation**, noteheads coloured by scale degree, with the
+  matching colour, number and letter on a chip beneath each note
+
+That last one is §5.4's Phase 3 idea — blocks becoming noteheads, same colours retained
+— reached on paper rather than as app UI, which costs an evening instead of a phase.
 
 ## Running it
 
@@ -61,7 +88,13 @@ the repo name without changing `BASE` in `vite.config.ts` ships a blank white sc
 - **`src/music/` is pure and tested; `src/audio/` is the imperative shell.** Keep new
   musical rules on the pure side so they can be tested without mocking Web Audio.
 - **All eight colors live in `src/music/colors.ts`.** A full re-skin is a one-file
-  change, which is deliberate — see §11 of the requirements.
+  change, which is deliberate — see §11 of the requirements. The print pack imports the
+  same file, so paper and screen cannot drift apart — a sticker that no longer matches
+  the app breaks the one link the pack exists to create.
+- **Challenge answers are placed via a ref, not the `slots` state.** Two taps inside one
+  render cycle would otherwise read the same snapshot and lose one, which is precisely
+  what a six-year-old mashing blocks produces.
+- **SVG `width`/`height` attributes reject `calc()`** — size them through `style`.
 - **Notes fire on `pointerdown`, never `click`,** and Tone's `lookAhead` is dropped to
   near zero. Latency here is not a polish item; it breaks the metaphor.
 - **The tap-to-start splash is required,** not decorative. iOS Safari will not start an

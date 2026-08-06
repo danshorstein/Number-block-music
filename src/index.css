@@ -21,6 +21,8 @@
   --btn-lg-h: min(13dvh, 68px);
   --btn-lg-w: min(22vw, 116px);
 
+  /** Answer slots in a challenge: tall enough for a degree-8 tower of mini cubes. */
+  --challenge-slot-h: calc(var(--mini) * 8 + 0.6rem);
   --tap: 60px;
   --splash-cube: min(6vw, 3.2dvh, 30px);
 

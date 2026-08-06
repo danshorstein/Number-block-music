@@ -16,7 +16,8 @@
     "framer-motion": "^12.43.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "tone": "^15.1.22"
+    "tone": "^15.1.22",
+    "vexflow": "^5.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DEFAULT_KEY, REST, type Degree, type KeyName, type Slot } from '../music/scale'
 import { STRIP_LENGTH } from '../music/melodies'
+import { CHALLENGE_IDS, type ChallengeId } from '../challenges/generate'
 
 /** The §4.3 ladder: numbers, then numbers with letters, then letters alone. */
 export type DisplayMode = 'numbers' | 'both' | 'letters'
@@ -37,6 +38,14 @@ const DEFAULT_SETTINGS: Settings = {
 
 const SETTINGS_KEY = 'music-blocks:settings'
 const SEQUENCE_KEY = 'music-blocks:sequence'
+const PROGRESS_KEY = 'music-blocks:progress'
+
+/** Stars earned per challenge (F14). Only ever goes up — nothing here can be lost. */
+export type Progress = Record<ChallengeId, number>
+
+const EMPTY_PROGRESS = Object.fromEntries(
+  CHALLENGE_IDS.map((id) => [id, 0]),
+) as Progress
 
 const emptyStrip = (): Slot[] => Array<Slot>(STRIP_LENGTH).fill(null)
 
@@ -79,6 +88,21 @@ export function useAppState() {
     }
   }, [slots])
 
+  const [progress, setProgress] = useState<Progress>(() => load(PROGRESS_KEY, EMPTY_PROGRESS))
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress))
+    } catch {
+      // As above.
+    }
+  }, [progress])
+
+  /** Stars only ever climb — a worse run never takes a star away (F14). */
+  const recordStars = useCallback((id: ChallengeId, stars: number) => {
+    setProgress((current) => ({ ...current, [id]: Math.max(current[id] ?? 0, stars) }))
+  }, [])
+
   const updateSettings = useCallback((patch: Partial<Settings>) => {
     setSettings((current) => ({ ...current, ...patch }))
   }, [])
@@ -119,6 +143,7 @@ export function useAppState() {
   return {
     slots,
     settings,
+    progress,
     bpm,
     isEmpty,
     isFull,
@@ -127,5 +152,6 @@ export function useAppState() {
     clear,
     setStrip,
     updateSettings,
+    recordStars,
   }
 }

@@ -167,6 +167,23 @@ export function ParentArea({ settings, onChange }: ParentAreaProps) {
                 />
               </Field>
 
+              <Field label="Take it to the real piano">
+                <a
+                  href={`${import.meta.env.BASE_URL}print/`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-block rounded-xl bg-emerald-400 px-4 py-2 text-sm
+                             font-bold text-emerald-950"
+                >
+                  Open the print pack
+                </a>
+                <p className="mt-2 text-xs text-white/50">
+                  Key stickers at true scale, a music-stand chart, a one-page note for his
+                  teacher, and six songs in real notation with the noteheads coloured to
+                  match the blocks. Print at 100% scale or the stickers won’t fit the keys.
+                </p>
+              </Field>
+
               {isSpeechAvailable() && (
                 <Field label="Say the name out loud">
                   <div className="flex gap-2">
