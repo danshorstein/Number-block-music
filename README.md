@@ -71,10 +71,30 @@ npm run dev
 
 ## Deploying
 
-Pushes to `main` build and publish to GitHub Pages automatically.
+Pushes to `main` build and publish to GitHub Pages automatically, via
+`.github/workflows/deploy.yml`.
 
 **One-time setup:** repo **Settings → Pages → Source: GitHub Actions**. Until that
 switch is flipped the workflow runs green and publishes nothing.
+
+### When Actions isn't running
+
+Actions has gone quiet on this repo before — no CI, no deploy, no runs of any kind, so
+merges to `main` simply never publish and the site silently stays on an old build. If
+the Actions tab shows nothing for a recent push, that is what has happened; check
+**Settings → Actions → General**, the account's billing page, and githubstatus.com.
+
+Until it recovers, publish by hand:
+
+```bash
+npm run deploy    # builds, then pushes dist/ to the gh-pages branch
+```
+
+and set **Settings → Pages → Source: Deploy from a branch → `gh-pages` → / (root)**.
+
+The two Pages sources are mutually exclusive, so while `gh-pages` is selected the
+Actions pipeline will not publish even once Actions comes back — switch the source back
+to **GitHub Actions** at that point, and deploys become automatic again.
 
 The live URL is then `https://danshorstein.github.io/Number-block-music/`. Vite's
 `base`, and the PWA `scope` and `start_url`, are all pinned to that subpath — changing
