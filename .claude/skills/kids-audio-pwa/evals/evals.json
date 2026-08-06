@@ -1,0 +1,26 @@
+{
+  "skill_name": "kids-audio-pwa",
+  "evals": [
+    {
+      "id": 0,
+      "name": "build-toddler-piano-for-iphone",
+      "prompt": "my daughter is 5 and obsessed with our piano. can you make me a little web page where she taps 5 big colored buttons and each one plays an actual piano note (not a beep). needs to work on my iphone — i want to add it to the home screen — and it has to still work on a plane with no wifi. single folder i can just open is fine, doesn't need to be fancy.",
+      "expected_output": "A working web app that unlocks audio from a click (not pointerdown), sets navigator.audioSession.type for the silent switch, does not fetch audio from a CDN at runtime, has a tap-to-start gate, bounds its startup awaits, and uses large touch targets.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "diagnose-stale-github-pages-deploy",
+      "prompt": "ok im losing my mind here. our little music app for my kid is on github pages. i merged the PR like 20 min ago, the branch is definitely merged into main, but the site still shows the old version. ive hard refreshed like 10 times and even tried my wife's phone. what do i check?",
+      "expected_output": "Diagnosis that starts by verifying the deploy/CI actually ran for the merge commit before blaming caching, then covers base-path mismatch and the service worker serving the previous build once.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "printable-true-scale-key-stickers",
+      "prompt": "i want to print colored dot stickers to stick on the piano keys at home, one octave from C to C, colored to match the app my son uses. give me an html page i can print. main thing is they have to actually be the right size for the keys, last time i tried something like this they came out too small and were useless.",
+      "expected_output": "A print page using physical units (mm) sized to real white-key pitch, with a calibration ruler to verify 100% print scale, print-color-adjust set so the colors survive, and clear actual-size printing instructions.",
+      "files": []
+    }
+  ]
+}
