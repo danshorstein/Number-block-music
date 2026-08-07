@@ -19,8 +19,10 @@ import {
 import { speakDegree, speakLetter } from './audio/voice'
 import { pickMelody } from './music/melodies'
 import { REST, degreeToLetter, isDegree, type Degree } from './music/scale'
+import { Keyboard } from './components/Keyboard'
 import { ChallengeMenu } from './components/ChallengeMenu'
 import { ChallengeScreen } from './components/ChallengeScreen'
+import { StepSkipScreen } from './components/StepSkipScreen'
 import type { ChallengeId } from './challenges/generate'
 
 export default function App() {
@@ -28,6 +30,9 @@ export default function App() {
     slots,
     settings,
     progress,
+    profiles,
+    profileId,
+    degrees,
     bpm,
     isEmpty,
     append,
@@ -36,6 +41,8 @@ export default function App() {
     setStrip,
     updateSettings,
     recordStars,
+    switchProfile,
+    addProfile,
   } = useAppState()
 
   /** Free play, the challenge list, or one challenge in progress. */
@@ -47,6 +54,9 @@ export default function App() {
   const [audioError, setAudioError] = useState<string | undefined>(undefined)
   const [playingIndex, setPlayingIndex] = useState<number | null>(null)
   const [pulses, setPulses] = useState<Record<string, number>>({})
+  /** Which key the bridge should light up. Cleared shortly after the note starts. */
+  const [sounding, setSounding] = useState<Degree | null>(null)
+  const soundingTimer = useRef<number | null>(null)
   const lastMelodyId = useRef<string | undefined>(undefined)
   const sequenceRef = useRef<SequenceHandle | null>(null)
 
@@ -76,6 +86,15 @@ export default function App() {
     setPulses((current) => ({ ...current, [id]: (current[id] ?? 0) + 1 }))
   }, [])
 
+  /** Light the matching key, so block and key are seen as the same thing. */
+  const light = useCallback((degree: Degree | null) => {
+    if (soundingTimer.current) window.clearTimeout(soundingTimer.current)
+    setSounding(degree)
+    if (degree !== null) {
+      soundingTimer.current = window.setTimeout(() => setSounding(null), 420)
+    }
+  }, [])
+
   /** Tapping a tower sounds it and drops it into the next free slot (F2, F3). */
   const handlePick = useCallback(
     (value: Degree | typeof REST) => {
@@ -83,6 +102,7 @@ export default function App() {
 
       if (isDegree(value)) {
         playDegree(value, settings.key)
+        light(value)
         if (settings.voice) {
           if (settings.displayMode === 'letters') {
             speakLetter(degreeToLetter(value, settings.key))
@@ -94,7 +114,7 @@ export default function App() {
 
       append(value)
     },
-    [append, bump, settings.key, settings.voice, settings.displayMode],
+    [append, bump, light, settings.key, settings.voice, settings.displayMode],
   )
 
   const handleTogglePlay = useCallback(() => {
@@ -110,12 +130,16 @@ export default function App() {
       slots,
       key: settings.key,
       bpm,
-      onStep: setPlayingIndex,
+      onStep: (index) => {
+        setPlayingIndex(index)
+        const slot = index === null ? null : slots[index]
+        light(isDegree(slot) ? slot : null)
+      },
       onDone: () => {
         sequenceRef.current = null
       },
     })
-  }, [bpm, isEmpty, isPlaying, settings.key, slots])
+  }, [bpm, isEmpty, isPlaying, light, settings.key, slots])
 
   const handleCycleTempo = useCallback(() => {
     const index = TEMPOS.findIndex((t) => t.id === settings.tempo)
@@ -141,7 +165,16 @@ export default function App() {
   return (
     <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#1b1136]">
       <RotateNudge />
-      {view === 'sandbox' && <ParentArea settings={settings} onChange={updateSettings} />}
+      {view === 'sandbox' && (
+        <ParentArea
+          settings={settings}
+          onChange={updateSettings}
+          profiles={profiles}
+          profileId={profileId}
+          onSwitchProfile={switchProfile}
+          onAddProfile={addProfile}
+        />
+      )}
 
       {/* The way in to the challenges: a star, no words (§6). */}
       {view === 'sandbox' && (
@@ -176,11 +209,24 @@ export default function App() {
         />
       )}
 
-      {view === 'challenge' && activeChallenge && (
+      {view === 'challenge' && activeChallenge === 'step-skip' && (
+        <StepSkipScreen
+          musicKey={settings.key}
+          bpm={bpm}
+          degrees={degrees}
+          earned={progress['step-skip'] ?? 0}
+          onEarn={(stars) => recordStars('step-skip', stars)}
+          onBack={() => setView('menu')}
+        />
+      )}
+
+      {view === 'challenge' && activeChallenge && activeChallenge !== 'step-skip' && (
         <ChallengeScreen
           id={activeChallenge}
           musicKey={settings.key}
           bpm={bpm}
+          degrees={degrees}
+          tier={settings.tier}
           earned={progress[activeChallenge] ?? 0}
           onEarn={(stars) => recordStars(activeChallenge, stars)}
           onBack={() => setView('menu')}
@@ -192,6 +238,7 @@ export default function App() {
       {view === 'sandbox' && (
       <main className="flex min-h-0 flex-1 flex-col justify-center gap-[1.6vh] pt-2 pb-[2.5vh]">
         <Palette
+          degrees={degrees}
           displayMode={settings.displayMode}
           musicKey={settings.key}
           pulses={pulses}
@@ -206,6 +253,16 @@ export default function App() {
           musicKey={settings.key}
           onRemove={removeAt}
         />
+
+        {settings.showKeyboard && (
+          <Keyboard
+            available={degrees}
+            sounding={sounding}
+            displayMode={settings.displayMode}
+            musicKey={settings.key}
+            colored={settings.displayMode !== 'letters'}
+          />
+        )}
 
         <TransportBar
           isPlaying={isPlaying}

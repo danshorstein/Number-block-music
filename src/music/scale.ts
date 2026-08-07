@@ -13,6 +13,25 @@ export type Degree = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
 
 export const DEGREES: readonly Degree[] = [1, 2, 3, 4, 5, 6, 7, 8]
 
+/**
+ * The major pentatonic: the scale with 4 and 7 taken out.
+ *
+ * Those two degrees are where every semitone clash in a major scale comes from, so with
+ * them gone no combination of blocks in any order at any speed can sound wrong. Kodály
+ * teaches pentatonic before diatonic for exactly that reason — the child gets to
+ * improvise freely before there is any way to be out of tune.
+ *
+ * The heights stay honest (1, 2, 3, 5, 6): the missing towers are notes that are not in
+ * this scale, not gaps in the counting.
+ */
+export const PENTATONIC: readonly Degree[] = [1, 2, 3, 5, 6]
+
+/** Which pitches the palette offers. Set per child in the parent area. */
+export type PitchSet = 'pentatonic' | 'diatonic'
+
+export const degreesFor = (pitchSet: PitchSet): readonly Degree[] =>
+  pitchSet === 'pentatonic' ? PENTATONIC : DEGREES
+
 /** A silent beat. Not in the requirements doc, but F8's own melodies need it. */
 export const REST = 'rest' as const
 export type Rest = typeof REST

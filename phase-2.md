@@ -14,13 +14,13 @@ Two things since v1 shipped.
 **The app works and he likes it.** The sandbox and challenges are live, the print pack
 exists, and the metaphor holds up in use.
 
-**The audience tripled.** It now has to be worth opening for a 6-year-old, an
-8-year-old, and a 10-year-old. That is not "the same app, but more levels" — it is the
-single biggest design constraint in this document, and §3 exists because of it.
+**The audience doubled.** It now has to be worth opening for a 6-year-old and an
+8-year-old. Ages 9–12 are deliberately out of scope — see §3.
 
 There is also a correction to make. When asked whether to add interval training, the
-answer given was no. That answer was right *for the six-year-old* and wrong for his
-brothers, and §4.5 says so properly.
+answer given was no. That answer was right for a six-year-old, and would have been wrong
+for a ten-year-old; with the scope set at 8 and under it stands. §4.5 records why, since
+the reasoning matters if the range ever widens.
 
 ---
 
@@ -56,38 +56,45 @@ amount of app design substitutes for that.
 
 ---
 
-## 3. Three children, not one — the core problem
+## 3. Two children, and a deliberate ceiling at 8
 
 Apps built for "kids 4–12" serve nobody, because 6–8 and 9–12 are different
 developmental bands. A six-year-old needs pictograms and audio support; a ten-year-old
-is ready for real complexity and will read a wordless, googly-eyed block interface as
-something made for his little brother. Get this wrong in either direction and one of
-them stops opening it.
+is ready for real complexity and reads a wordless, googly-eyed block interface as
+something made for his little brother.
 
-**The design answer: one engine, three faces.**
+**So the ceiling is 8, on purpose.** 6–8 is one band, which means the block grammar, the
+faces and the text-free UI stay coherent for both children instead of being apologised
+for at the top end. Scope discipline here buys more than a third tier would.
+
+**The design answer: one engine, two faces.**
 
 The scale-degree grammar, the audio engine, the challenge generator and the colour
 tokens are shared. What changes by tier is **what is on screen and how deep the material
 goes** — not a difficulty multiplier on the same content.
 
-| | Tier 1 | Tier 2 | Tier 3 |
-|---|---|---|---|
-| Roughly | ~6 | ~8 | ~10 |
-| Pitch set | Pentatonic → diatonic | Full diatonic | Diatonic + accidentals |
-| Labels | Numbers | Numbers + letters | Letters, then none |
-| Reading | None | Colour-coded staff | Standard notation, colour fading |
-| Ear work | so–mi, steps vs skips | Longer patterns, contour | **Named intervals**, chords |
-| Rhythm | None | Duration blocks | Duration + rests + meter |
-| Register | Middle C octave | Middle C octave | **Bass clef / lower register** |
-| Faces on blocks | Yes | Yes | Off by default |
+| | Tier 1 | Tier 2 |
+|---|---|---|
+| Roughly | ~6 | ~8 |
+| Pitch set | Pentatonic (1 2 3 5 6) | Full diatonic |
+| Labels | Numbers | Numbers + letters |
+| Reading | None | Colour-coded staff |
+| Ear work | so–mi, steps vs skips | Longer patterns, contour |
+| Rhythm | None | Duration blocks |
+| Register | Middle C octave | Middle C octave |
 
-**Tier is set in the parent area, never shown to the child.** No ten-year-old is told he
-is on level 1, and no six-year-old is shown a locked door. This sidesteps the
-condescension problem entirely and costs nothing.
+**Tier is set in the parent area, never shown to the child.** Nobody is told they are on
+level 1, and nobody is shown a locked door. This costs nothing and removes the
+condescension risk entirely.
 
-**New requirement that falls out of this: profiles.** Three children on one iPad
-currently share one `localStorage` blob and will overwrite each other's progress. Tier
-and stars must be per-child. This is small now and painful later.
+**New requirement that falls out of this: profiles.** Two children on one iPad currently
+share one `localStorage` blob and will overwrite each other's progress. Tier and stars
+must be per-child. Small now, painful later.
+
+**Out of scope, and what would bring it back.** Named intervals, chords, bass clef and
+plain uncoloured notation are all deferred with the 9–12 band. If the eldest ever asks
+for it himself, §4.5 and §4.7 hold the reasoning — but building them speculatively
+would compromise the design for the two children who actually use it.
 
 ---
 
@@ -110,11 +117,11 @@ middle link currently exists only on the printed stickers.
   literature is explicit that the useful version is staged — colour, then colour on
   standard notation, then no colour — precisely so the scaffold can be removed.
 
-Serves all three tiers. This is the highest-value item in the document.
+Serves both tiers. This is the highest-value item in the document.
 
 > **Why not make it playable?** Because the goal is transfer to the instrument in the
-> room. A fully playable on-screen piano competes with the real one. If it earns its way
-> later, add it at Tier 3 where reading, not tapping, is the point.
+> room. A fully playable on-screen piano competes with the real one. Revisit only if
+> watching them use it says otherwise.
 
 ### 4.2 Steps and skips — P1
 
@@ -146,16 +153,15 @@ cannot fail. Kodály sequences pentatonic before diatonic for exactly this reaso
 
 Parent-area toggle; default on at Tier 1.
 
-### 4.5 Named intervals — P2, Tier 3 only
+### 4.5 Named intervals — deferred with the 9–12 band
 
-**This reverses the earlier recommendation, and the reversal is the point.** Abstract
-reasoning arrives around age 7, and interval naming is appropriate for 8–10. A
-ten-year-old who plays bass is well past the gate.
+Abstract reasoning arrives around age 7, so interval naming becomes appropriate towards
+8–10. At a ceiling of 8 it sits right at the boundary, and scale-degree function remains
+the more useful system for both children we are actually building for.
 
-Teach as distance between degrees the app already uses (1→5 is a fifth), anchored to
-songs he knows, on the keyboard where the distance is visible as physical space.
-
-**Still absent at Tier 1**, where scale-degree function remains the better system.
+Recorded here so the reasoning survives: if this ever extends upward, teach intervals as
+distance between the degrees the app already uses (1→5 is a fifth), anchored to known
+songs, on the keyboard where the distance is visible as physical space.
 
 ### 4.6 Duration blocks — P2
 
@@ -165,16 +171,15 @@ v1. Rhythm is half of music and the app currently has none.
 Preserves the "size means something real" rule, and the songbook data already carries
 beats per note, so the model exists.
 
-### 4.7 Bass clef and lower register — P2
+### 4.7 Bass clef and lower register — deferred
 
-§5.4 filed this under Phase 3 for a hypothetical user. That user is now real and plays
-bass. Same block grammar, register shifted down, bass clef in the printed songbook.
+§5.4 filed this under Phase 3 for the older brother. Out of scope at a ceiling of 8, and
+it only becomes worth building if he asks for it himself.
 
-Likely the single biggest driver of whether the 10-year-old opens it twice.
+### 4.8 Chords — deferred
 
-### 4.8 Chords — P3
-
-Blocks side by side in one slot sound together; 1-3-5 becomes visibly a shape. Tier 3.
+Blocks side by side in one slot sound together; 1-3-5 becomes visibly a shape. Belongs
+with the 9–12 material.
 
 ### 4.9 Session shape — P1, and it is mostly not code
 
@@ -189,8 +194,10 @@ To exploit spacing without violating §10's ban on engagement mechanics:
 
 ## 5. Explicitly not building
 
-- **Named intervals at Tier 1.** Sideways into a less useful system for a six-year-old.
-- **A single undifferentiated UI for ages 6–10.** It would serve nobody.
+- **Named intervals.** Sideways into a less useful system for a six- or eight-year-old.
+- **Anything aimed at 9–12.** Bass clef, chords, plain notation. Building them
+  speculatively would compromise the design for the two children who do use it.
+- **A single undifferentiated UI spanning 6–12.** It would serve nobody.
 - **Streaks, notifications, leaderboards, daily goals.** §10 forbids them and the
   evidence does not need them.
 - **Harder = more random notes.** A seven-degree random pattern is *worse* pedagogy
@@ -203,11 +210,10 @@ To exploit spacing without violating §10's ban on engagement mechanics:
 
 | ID | Decision | Recommendation |
 |---|---|---|
-| **D6** | Does the 10-year-old actually want this, or tolerate it? | **Ask him before building Tier 3.** It is the largest chunk of work here and rests entirely on an assumption. |
-| **D7** | Faces on blocks at Tier 3 | Off by default, toggleable. Character is why it works at 6 and why it may repel at 10. |
-| **D8** | Bass clef range | Depends whether it's bass guitar or double bass — need the actual instrument before picking the register. |
-| **D9** | Profiles: per-device or per-child | Per-child, and do it before Tier 2, or three kids overwrite each other. |
-| **D10** | Is the older brother a *user* or a *co-author*? | Consider letting him build challenges for his brother. Composing for someone else is a stronger motivator than being taught. |
+| **D6** | ~~Does the 10-year-old want this?~~ | **Resolved: scope set at 8 and under.** Not building for him until he asks. |
+| **D7** | Faces on blocks at Tier 2 | Keep them. At 8 they still read as characters rather than as babyish; revisit only if he says otherwise. |
+| **D9** | Profiles: per-device or per-child | Per-child, before Tier 2, or two kids overwrite each other. |
+| **D10** | Is the older brother a *user* or a *co-author*? | Still worth trying — letting him build challenges for his brother is a stronger motivator than being taught, and it needs no new tier. |
 
 ---
 
@@ -217,10 +223,9 @@ To exploit spacing without violating §10's ban on engagement mechanics:
 |---|---|
 | **2a** | Keyboard bridge, steps and skips, sequenced Echo Me, pentatonic mode, profiles |
 | **2b** | Duration blocks, Tier 2 presentation, colour-coded staff reading |
-| **2c** | Tier 3: named intervals, bass clef, chords, colour fading to plain notation |
 
-2a serves all three children and is worth doing regardless of how D6 lands. 2c should
-not start until D6 is answered by an actual conversation with an actual ten-year-old.
+2a serves both children. 2b is the eight-year-old's depth. There is no 2c — the 9–12
+material stays unbuilt unless someone that age asks for it.
 
 ---
 
@@ -231,7 +236,7 @@ Unchanged in spirit from §10, with one addition per child:
 1. Does each of them ask for it, unprompted?
 2. Does time at the real piano move?
 3. Can the six-year-old answer "what's a five?" at the keyboard, without the app.
-4. Can the ten-year-old name an interval he hears, away from the screen.
+4. Can the eight-year-old find a note by letter name on the real piano.
 5. Does the teacher notice a difference within 6–8 weeks.
 
 Still not tracking session length, daily actives, or anything that would tempt the

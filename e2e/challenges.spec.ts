@@ -8,6 +8,9 @@ import { expect, test, type Page } from '@playwright/test'
  * costs nothing, and stars only ever go up.
  */
 
+/** The staircase asks for the active pitch set, which now defaults to the pentatonic. */
+const STAIRCASE = [1, 2, 3, 5, 6]
+
 async function openStaircase(page: Page) {
   await page.goto('/')
   await page.getByRole('button', { name: 'Tap to start' }).click()
@@ -40,7 +43,7 @@ test('completing a round earns a star, and finishing three returns to the list',
   await openStaircase(page)
 
   for (let round = 1; round <= 3; round++) {
-    for (let degree = 1; degree <= 8; degree++) {
+    for (const degree of STAIRCASE) {
       await tapDegree(page, degree)
       await page.waitForTimeout(90)
     }
@@ -54,7 +57,7 @@ test('completing a round earns a star, and finishing three returns to the list',
 
 test('stars survive a reload', async ({ page }) => {
   await openStaircase(page)
-  for (let degree = 1; degree <= 8; degree++) {
+  for (const degree of STAIRCASE) {
     await tapDegree(page, degree)
     await page.waitForTimeout(90)
   }

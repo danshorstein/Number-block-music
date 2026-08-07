@@ -10,7 +10,7 @@ import { useCallback, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { KEY_NAMES, type KeyName } from '../music/scale'
 import { isSpeechAvailable } from '../audio/voice'
-import type { DisplayMode, Settings } from '../state/useAppState'
+import type { DisplayMode, Profile, Settings, Tier } from '../state/useAppState'
 
 const HOLD_MS = 800
 
@@ -23,9 +23,20 @@ const DISPLAY_MODES: { id: DisplayMode; label: string; hint: string }[] = [
 interface ParentAreaProps {
   settings: Settings
   onChange: (patch: Partial<Settings>) => void
+  profiles: Profile[]
+  profileId: string
+  onSwitchProfile: (id: string) => void
+  onAddProfile: (name: string) => string
 }
 
-export function ParentArea({ settings, onChange }: ParentAreaProps) {
+export function ParentArea({
+  settings,
+  onChange,
+  profiles,
+  profileId,
+  onSwitchProfile,
+  onAddProfile,
+}: ParentAreaProps) {
   const [open, setOpen] = useState(false)
   const [holdProgress, setHoldProgress] = useState(0)
   const holdTimer = useRef<number | null>(null)
@@ -119,6 +130,97 @@ export function ParentArea({ settings, onChange }: ParentAreaProps) {
                   Done
                 </button>
               </div>
+
+              <Field label="Who's playing">
+                <div className="flex flex-wrap gap-2">
+                  {profiles.map((profile) => (
+                    <Choice
+                      key={profile.id}
+                      active={profile.id === profileId}
+                      onSelect={() => onSwitchProfile(profile.id)}
+                    >
+                      {profile.name}
+                    </Choice>
+                  ))}
+                  <button
+                    type="button"
+                    onPointerDown={() => {
+                      const name = window.prompt('Name for the new player?')
+                      if (name !== null) onSwitchProfile(onAddProfile(name))
+                    }}
+                    className="rounded-xl border border-dashed border-white/25 px-3 py-2
+                               text-sm font-bold text-white/60"
+                  >
+                    + Add
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-white/50">
+                  Stars and settings are kept separately for each player, so two children
+                  sharing this device don't overwrite each other.
+                </p>
+              </Field>
+
+              <Field label="How much scale">
+                <div className="flex gap-2">
+                  <Choice
+                    active={settings.pitchSet === 'pentatonic'}
+                    onSelect={() => onChange({ pitchSet: 'pentatonic' })}
+                  >
+                    5 notes
+                  </Choice>
+                  <Choice
+                    active={settings.pitchSet === 'diatonic'}
+                    onSelect={() => onChange({ pitchSet: 'diatonic' })}
+                  >
+                    All 8
+                  </Choice>
+                </div>
+                <p className="mt-2 text-xs text-white/50">
+                  Five notes is the major pentatonic — 4 and 7 removed. Nothing can sound
+                  wrong in any order, which is why it comes first. Move to all eight once
+                  he's confident.
+                </p>
+              </Field>
+
+              <Field label="Depth">
+                <div className="flex gap-2">
+                  {([1, 2] as Tier[]).map((tier) => (
+                    <Choice
+                      key={tier}
+                      active={settings.tier === tier}
+                      onSelect={() => onChange({ tier })}
+                    >
+                      {tier === 1 ? 'Around 6' : 'Around 8'}
+                    </Choice>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-white/50">
+                  Sets where ear-training starts and how much is on screen. Never shown to
+                  the child.
+                </p>
+              </Field>
+
+              <Field label="Show the keyboard">
+                <div className="flex gap-2">
+                  <Choice
+                    active={settings.showKeyboard}
+                    onSelect={() => onChange({ showKeyboard: true })}
+                  >
+                    On
+                  </Choice>
+                  <Choice
+                    active={!settings.showKeyboard}
+                    onSelect={() => onChange({ showKeyboard: false })}
+                  >
+                    Off
+                  </Choice>
+                </div>
+                <p className="mt-2 text-xs text-white/50">
+                  Lights up the piano key each block belongs to, with the same colours as
+                  the printed stickers. It can't be played — the point is to connect the
+                  blocks to the real instrument, not replace it.
+                </p>
+              </Field>
 
               <Field label="What the blocks say">
                 <div className="flex gap-2">
