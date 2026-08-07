@@ -7,11 +7,11 @@
  * tablet the limit is width. min() lets one rule serve both without media queries.
  */
 :root {
-  --cube: min(6.4vw, 6dvh, 56px);
+  --cube: min(6.4vw, 5.2dvh, 56px);
   --palette-h: calc(var(--cube) * 8.6);
   /* Half-size, not a token: the strip has to be readable as a skyline from across the
      room, because the melody's shape is the thing being taught. */
-  --mini: calc(var(--cube) * 0.5);
+  --mini: calc(var(--cube) * 0.45);
   --strip-h: calc(var(--mini) * 8 + 0.6rem);
 
   /* Buttons are pills, not circles: height is scarce in landscape but width is not,
@@ -23,6 +23,14 @@
 
   /** Answer slots in a challenge: tall enough for a degree-8 tower of mini cubes. */
   --challenge-slot-h: calc(var(--mini) * 8 + 0.6rem);
+  /* The keyboard bridge. Width is set from the viewport rather than from the cube, so
+     the strip stays about as wide as the palette above it and the two read as the same
+     instrument. It is deliberately squat: a fourth row has to fit inside the ~390px a
+     phone gives in landscape, and this is a reference strip, not a playable keyboard. */
+  --kbd-key-w: min(8vw, 56px);
+  --kbd-h: min(9dvh, 62px);
+  --kbd-dot: calc(var(--kbd-key-w) * 0.42);
+
   --tap: 60px;
   --splash-cube: min(6vw, 3.2dvh, 30px);
 

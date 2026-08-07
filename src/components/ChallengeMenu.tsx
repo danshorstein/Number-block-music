@@ -15,6 +15,7 @@ interface ChallengeMenuProps {
 }
 
 const LABELS: Record<ChallengeId, string> = {
+  'step-skip': 'Steps and Skips — did it move next door or jump?',
   echo: 'Echo Me — listen and rebuild',
   staircase: 'Fill the Staircase — put them in order',
   'which-one': 'Which One Am I? — find the note you hear',
@@ -83,6 +84,22 @@ function Pictogram({ id }: { id: ChallengeId }) {
   } as const
 
   switch (id) {
+    case 'step-skip':
+      return (
+        <svg {...common}>
+          <Speaker />
+          <rect x="34" y="30" width="11" height="14" rx="3" fill={block(3)} />
+          <rect x="47" y="18" width="11" height="26" rx="3" fill={block(8)} />
+          <path
+            d="M40 26 Q46 12 52 14"
+            stroke="rgba(255,255,255,0.6)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeDasharray="4 3"
+            fill="none"
+          />
+        </svg>
+      )
     case 'echo':
       return (
         <svg {...common}>

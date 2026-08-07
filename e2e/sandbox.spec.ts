@@ -17,6 +17,8 @@ async function start(page: Page) {
 
 test('the staircase is all there, degree 1 through degree 8', async ({ page }) => {
   await start(page)
+  // The full scale is the default. Pentatonic (1-2-3-5-6) is one tap away in the
+  // parent area for when nothing should be able to sound wrong.
   for (let degree = 1; degree <= 8; degree++) {
     await expect(page.getByRole('button', { name: `Degree ${degree}`, exact: true })).toBeVisible()
   }

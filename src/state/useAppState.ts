@@ -4,7 +4,15 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { DEFAULT_KEY, REST, type Degree, type KeyName, type Slot } from '../music/scale'
+import {
+  DEFAULT_KEY,
+  REST,
+  degreesFor,
+  type Degree,
+  type KeyName,
+  type PitchSet,
+  type Slot,
+} from '../music/scale'
 import { STRIP_LENGTH } from '../music/melodies'
 import { CHALLENGE_IDS, type ChallengeId } from '../challenges/generate'
 
@@ -20,12 +28,22 @@ export const TEMPOS = [
 
 export type TempoId = (typeof TEMPOS)[number]['id']
 
+/**
+ * Tier 1 is roughly six, tier 2 roughly eight. Set by a grown-up and never shown to the
+ * child — nobody gets told they are on level 1.
+ */
+export type Tier = 1 | 2
+
 export interface Settings {
   key: KeyName
   displayMode: DisplayMode
   tempo: TempoId
   volume: number
   voice: boolean
+  tier: Tier
+  pitchSet: PitchSet
+  /** The keyboard bridge under the blocks (Phase 2 §4.1). */
+  showKeyboard: boolean
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -34,11 +52,59 @@ const DEFAULT_SETTINGS: Settings = {
   tempo: 'medium',
   volume: 0.8,
   voice: false,
+  tier: 1,
+  // All eight. Kodaly sequences pentatonic first and it remains one tap away in the
+  // parent area, but the full staircase — and the octave moment at 8 — is what he
+  // already knows this app to be, and taking blocks away from a working thing is a
+  // worse trade than the theory suggests.
+  pitchSet: 'diatonic',
+  showKeyboard: true,
 }
 
-const SETTINGS_KEY = 'music-blocks:settings'
-const SEQUENCE_KEY = 'music-blocks:sequence'
-const PROGRESS_KEY = 'music-blocks:progress'
+/**
+ * Storage is namespaced per child. Two of them share one iPad, and a single shared blob
+ * meant whoever played last overwrote the other's stars and settings.
+ */
+export interface Profile {
+  id: string
+  /** Parent-facing only; the child UI never renders it. */
+  name: string
+}
+
+const PROFILES_KEY = 'music-blocks:profiles'
+const ACTIVE_PROFILE_KEY = 'music-blocks:active-profile'
+
+const DEFAULT_PROFILES: Profile[] = [{ id: 'one', name: 'Player 1' }]
+
+const settingsKey = (profileId: string) => `music-blocks:${profileId}:settings`
+const sequenceKey = (profileId: string) => `music-blocks:${profileId}:sequence`
+const progressKey = (profileId: string) => `music-blocks:${profileId}:progress`
+
+/**
+ * Move pre-profile data onto the default profile.
+ *
+ * Namespacing the keys per child would otherwise orphan everything already on the
+ * device — a child who had earned stars would open the app and find them gone, which
+ * is exactly the kind of silent loss F14 exists to prevent. Runs once; the old keys
+ * are left in place in case an older build is still installed somewhere.
+ */
+function migrateLegacyStorage(profileId: string): void {
+  const moves: [string, string][] = [
+    ['music-blocks:settings', settingsKey(profileId)],
+    ['music-blocks:sequence', sequenceKey(profileId)],
+    ['music-blocks:progress', progressKey(profileId)],
+  ]
+  try {
+    for (const [from, to] of moves) {
+      const legacy = localStorage.getItem(from)
+      if (legacy !== null && localStorage.getItem(to) === null) {
+        localStorage.setItem(to, legacy)
+      }
+    }
+  } catch {
+    // Private-mode Safari. Losing the migration is not worth crashing over.
+  }
+}
 
 /** Stars earned per challenge (F14). Only ever goes up — nothing here can be lost. */
 export type Progress = Record<ChallengeId, number>
@@ -48,6 +114,26 @@ const EMPTY_PROGRESS = Object.fromEntries(
 ) as Progress
 
 const emptyStrip = (): Slot[] => Array<Slot>(STRIP_LENGTH).fill(null)
+
+function loadList<T>(storageKey: string, fallback: T[]): T[] {
+  try {
+    const raw = localStorage.getItem(storageKey)
+    const parsed = raw ? JSON.parse(raw) : null
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : fallback
+  } catch {
+    return fallback
+  }
+}
+
+function loadStrip(profileId: string): Slot[] {
+  try {
+    const raw = localStorage.getItem(sequenceKey(profileId))
+    const parsed = raw ? (JSON.parse(raw) as Slot[]) : null
+    return Array.isArray(parsed) && parsed.length === STRIP_LENGTH ? parsed : emptyStrip()
+  } catch {
+    return emptyStrip()
+  }
+}
 
 function load<T>(storageKey: string, fallback: T): T {
   try {
@@ -59,44 +145,79 @@ function load<T>(storageKey: string, fallback: T): T {
 }
 
 export function useAppState() {
-  const [settings, setSettings] = useState<Settings>(() =>
-    load(SETTINGS_KEY, DEFAULT_SETTINGS),
+  const [profiles, setProfiles] = useState<Profile[]>(() =>
+    loadList(PROFILES_KEY, DEFAULT_PROFILES),
   )
-  const [slots, setSlots] = useState<Slot[]>(() => {
-    try {
-      const raw = localStorage.getItem(SEQUENCE_KEY)
-      const parsed = raw ? (JSON.parse(raw) as Slot[]) : null
-      return Array.isArray(parsed) && parsed.length === STRIP_LENGTH ? parsed : emptyStrip()
-    } catch {
-      return emptyStrip()
-    }
+  const [activeProfileId, setActiveProfileId] = useState<string>(() => {
+    const stored = localStorage.getItem(ACTIVE_PROFILE_KEY)
+    return stored ?? DEFAULT_PROFILES[0].id
   })
+
+  const profileId =
+    profiles.some((p) => p.id === activeProfileId) ? activeProfileId : profiles[0].id
+
+  // Before any state is read, so an existing device keeps its stars and settings.
+  migrateLegacyStorage(DEFAULT_PROFILES[0].id)
+
+  const [settings, setSettings] = useState<Settings>(() =>
+    load(settingsKey(profileId), DEFAULT_SETTINGS),
+  )
+  const [slots, setSlots] = useState<Slot[]>(() => loadStrip(profileId))
+  const [progress, setProgress] = useState<Progress>(() =>
+    load(progressKey(profileId), EMPTY_PROGRESS),
+  )
+
+  // Switching child swaps the whole working set, rather than carrying one child's
+  // stars and settings into the other's session.
+  const switchProfile = useCallback((id: string) => {
+    setActiveProfileId(id)
+    setSettings(load(settingsKey(id), DEFAULT_SETTINGS))
+    setSlots(loadStrip(id))
+    setProgress(load(progressKey(id), EMPTY_PROGRESS))
+    try {
+      localStorage.setItem(ACTIVE_PROFILE_KEY, id)
+    } catch {
+      // As below.
+    }
+  }, [])
+
+  const addProfile = useCallback((name: string) => {
+    const id = `p${Date.now().toString(36)}`
+    setProfiles((current) => {
+      const next = [...current, { id, name: name.trim() || `Player ${current.length + 1}` }]
+      try {
+        localStorage.setItem(PROFILES_KEY, JSON.stringify(next))
+      } catch {
+        // As below.
+      }
+      return next
+    })
+    return id
+  }, [])
 
   useEffect(() => {
     try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+      localStorage.setItem(settingsKey(profileId), JSON.stringify(settings))
     } catch {
       // Private-mode Safari throws here. Losing settings is not worth crashing over.
     }
-  }, [settings])
+  }, [profileId, settings])
 
   useEffect(() => {
     try {
-      localStorage.setItem(SEQUENCE_KEY, JSON.stringify(slots))
+      localStorage.setItem(sequenceKey(profileId), JSON.stringify(slots))
     } catch {
       // As above.
     }
-  }, [slots])
-
-  const [progress, setProgress] = useState<Progress>(() => load(PROGRESS_KEY, EMPTY_PROGRESS))
+  }, [profileId, slots])
 
   useEffect(() => {
     try {
-      localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress))
+      localStorage.setItem(progressKey(profileId), JSON.stringify(progress))
     } catch {
       // As above.
     }
-  }, [progress])
+  }, [profileId, progress])
 
   /** Stars only ever climb — a worse run never takes a star away (F14). */
   const recordStars = useCallback((id: ChallengeId, stars: number) => {
@@ -140,10 +261,16 @@ export function useAppState() {
     [settings.tempo],
   )
 
+  /** The degrees this child's palette offers right now. */
+  const degrees = useMemo(() => degreesFor(settings.pitchSet), [settings.pitchSet])
+
   return {
     slots,
     settings,
     progress,
+    profiles,
+    profileId,
+    degrees,
     bpm,
     isEmpty,
     isFull,
@@ -153,5 +280,7 @@ export function useAppState() {
     setStrip,
     updateSettings,
     recordStars,
+    switchProfile,
+    addProfile,
   }
 }

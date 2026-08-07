@@ -11,6 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   ROUNDS_PER_CHALLENGE,
+  echoStageFor,
   generateRound,
   isPlacementCorrect,
   isRoundSolved,
@@ -28,6 +29,9 @@ interface ChallengeScreenProps {
   id: ChallengeId
   musicKey: KeyName
   bpm: number
+  /** The child's active pitch set, so no round asks for a block they do not have. */
+  degrees: readonly Degree[]
+  tier: 1 | 2
   earned: number
   onEarn: (stars: number) => void
   onBack: () => void
@@ -37,11 +41,24 @@ export function ChallengeScreen({
   id,
   musicKey,
   bpm,
+  degrees,
+  tier,
   earned,
   onEarn,
   onBack,
 }: ChallengeScreenProps) {
-  const [round, setRound] = useState<Round>(() => generateRound(id))
+  /**
+   * Echo Me walks the so-mi progression rather than drawing at random. Stars are the
+   * only progress we keep, so they drive it; a tier-2 child starts partway up instead
+   * of re-earning so-mi.
+   */
+  const options = useCallback(
+    () => ({ stage: echoStageFor(earned, tier === 2 ? 2 : 0), degrees }),
+    [degrees, earned, tier],
+  )
+  const [round, setRound] = useState<Round>(() =>
+    generateRound(id, { stage: echoStageFor(earned, tier === 2 ? 2 : 0), degrees }),
+  )
   const [slots, setSlots] = useState<Slot[]>(() => [...round.given])
   /**
    * The authoritative placement. Two taps inside one render cycle would otherwise both
@@ -93,13 +110,13 @@ export function ChallengeScreen({
   }, [round])
 
   const startNextRound = useCallback(() => {
-    const next = generateRound(id)
+    const next = generateRound(id, options())
     setRound(next)
     slotsRef.current = [...next.given]
     setSlots([...next.given])
     setWrongAt(null)
     setCelebrating(false)
-  }, [id])
+  }, [id, options])
 
   const handlePick = useCallback(
     (value: Degree | 'rest') => {
@@ -258,6 +275,7 @@ export function ChallengeScreen({
       </div>
 
       <Palette
+        degrees={degrees}
         displayMode={round.letters ? 'letters' : 'numbers'}
         musicKey={musicKey}
         pulses={pulses}

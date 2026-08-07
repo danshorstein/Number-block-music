@@ -6,11 +6,14 @@
  * have the smallest hit area on the screen.
  */
 
+import type { CSSProperties } from 'react'
 import { DEGREES, REST, type Degree } from '../music/scale'
 import type { DisplayMode } from '../state/useAppState'
 import { BlockTower } from './BlockTower'
 
 interface PaletteProps {
+  /** Which towers to offer. Pentatonic drops 4 and 7, so nothing can sound wrong. */
+  degrees?: readonly Degree[]
   displayMode: DisplayMode
   musicKey: 'C' | 'D' | 'Eb' | 'F' | 'G'
   pulses: Record<string, number>
@@ -21,6 +24,7 @@ interface PaletteProps {
 }
 
 export function Palette({
+  degrees = DEGREES,
   displayMode,
   musicKey,
   pulses,
@@ -28,9 +32,17 @@ export function Palette({
   showRest = true,
   onPick,
 }: PaletteProps) {
+  // Reserve height for the tallest tower actually on offer, not always for eight. In
+  // pentatonic the top of the staircase is 6, and holding two cubes of empty air above
+  // it pushes everything else down for nothing.
+  const tallest = degrees.reduce<number>((max, degree) => Math.max(max, degree), 1)
+
   return (
-    <div className="flex w-full items-end justify-center gap-[0.6vw] px-2">
-      {DEGREES.map((degree) => (
+    <div
+      className="flex w-full items-end justify-center gap-[0.6vw] px-2"
+      style={{ '--palette-h': `calc(var(--cube) * ${tallest + 0.6})` } as CSSProperties}
+    >
+      {degrees.map((degree) => (
         <PaletteColumn
           key={degree}
           label={`Degree ${degree}`}

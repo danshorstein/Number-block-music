@@ -78,6 +78,18 @@ one.** A plain `button { background: none; border: 0 }` therefore beats `bg-*` a
 Put resets inside `@layer base`. If a background or border mysteriously does nothing,
 check this first.
 
+### `hidden` loses to any author `display`
+
+The `hidden` attribute is only a rule in the browser's own stylesheet, so
+`display: flex` from your CSS outranks it and the element stays visible. A splash you
+"hid" renders anyway, and every test still passes because the element is genuinely in
+the DOM with the attribute set. Conditionally render it, or set `display: none`
+yourself.
+
+This is the same failure as the layer problem above, and worth internalising as one
+idea: **specificity and cascade order beat intent, silently.** When something visual
+does nothing and the code looks right, suspect the cascade before the logic.
+
 ### SVG `width`/`height` attributes reject `calc()`
 
 They take plain lengths. Size SVGs through `style` instead. The failure is silent
