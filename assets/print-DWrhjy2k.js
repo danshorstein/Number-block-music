@@ -1,4 +1,4 @@
-import{c as e,n as t,o as n,r,s as i}from"./colors-DhdVoXM6.js";var a=18,o=23.5;function s(e,t){let r=t.glow?`box-shadow: inset 0 0 0 1.6mm ${t.glow};`:``;return`
+import{l as e,n as t,o as n,r,s as i}from"./colors-dkXNbIta.js";var a=18,o=23.5;function s(e,t){let r=t.glow?`box-shadow: inset 0 0 0 1.6mm ${t.glow};`:``;return`
     <div class="sticker" style="--dot: ${t.fill}; --ink: ${t.ink}; ${r}">
       <span class="sticker-degree">${e}</span>
       <span class="sticker-letter">${n(e,`C`)}</span>
