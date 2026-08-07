@@ -53,9 +53,11 @@ const DEFAULT_SETTINGS: Settings = {
   volume: 0.8,
   voice: false,
   tier: 1,
-  // Pentatonic first: with 4 and 7 gone nothing can sound wrong, which is why Kodaly
-  // sequences it ahead of the full scale.
-  pitchSet: 'pentatonic',
+  // All eight. Kodaly sequences pentatonic first and it remains one tap away in the
+  // parent area, but the full staircase — and the octave moment at 8 — is what he
+  // already knows this app to be, and taking blocks away from a working thing is a
+  // worse trade than the theory suggests.
+  pitchSet: 'diatonic',
   showKeyboard: true,
 }
 
@@ -77,6 +79,32 @@ const DEFAULT_PROFILES: Profile[] = [{ id: 'one', name: 'Player 1' }]
 const settingsKey = (profileId: string) => `music-blocks:${profileId}:settings`
 const sequenceKey = (profileId: string) => `music-blocks:${profileId}:sequence`
 const progressKey = (profileId: string) => `music-blocks:${profileId}:progress`
+
+/**
+ * Move pre-profile data onto the default profile.
+ *
+ * Namespacing the keys per child would otherwise orphan everything already on the
+ * device — a child who had earned stars would open the app and find them gone, which
+ * is exactly the kind of silent loss F14 exists to prevent. Runs once; the old keys
+ * are left in place in case an older build is still installed somewhere.
+ */
+function migrateLegacyStorage(profileId: string): void {
+  const moves: [string, string][] = [
+    ['music-blocks:settings', settingsKey(profileId)],
+    ['music-blocks:sequence', sequenceKey(profileId)],
+    ['music-blocks:progress', progressKey(profileId)],
+  ]
+  try {
+    for (const [from, to] of moves) {
+      const legacy = localStorage.getItem(from)
+      if (legacy !== null && localStorage.getItem(to) === null) {
+        localStorage.setItem(to, legacy)
+      }
+    }
+  } catch {
+    // Private-mode Safari. Losing the migration is not worth crashing over.
+  }
+}
 
 /** Stars earned per challenge (F14). Only ever goes up — nothing here can be lost. */
 export type Progress = Record<ChallengeId, number>
@@ -127,6 +155,9 @@ export function useAppState() {
 
   const profileId =
     profiles.some((p) => p.id === activeProfileId) ? activeProfileId : profiles[0].id
+
+  // Before any state is read, so an existing device keeps its stars and settings.
+  migrateLegacyStorage(DEFAULT_PROFILES[0].id)
 
   const [settings, setSettings] = useState<Settings>(() =>
     load(settingsKey(profileId), DEFAULT_SETTINGS),

@@ -8,8 +8,8 @@ import { expect, test, type Page } from '@playwright/test'
  * costs nothing, and stars only ever go up.
  */
 
-/** The staircase asks for the active pitch set, which now defaults to the pentatonic. */
-const STAIRCASE = [1, 2, 3, 5, 6]
+/** The staircase asks for the active pitch set, which defaults to the full scale. */
+const STAIRCASE = [1, 2, 3, 4, 5, 6, 7, 8]
 
 async function openStaircase(page: Page) {
   await page.goto('/')

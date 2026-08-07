@@ -13,16 +13,34 @@ async function start(page: Page) {
   await expect(page.getByRole('button', { name: 'Tap to start' })).toBeHidden({ timeout: 30_000 })
 }
 
-test('the palette opens on the pentatonic — no 4, no 7, nothing that can clash', async ({
-  page,
-}) => {
+test('the palette offers the full scale by default', async ({ page }) => {
   await start(page)
-  for (const degree of [1, 2, 3, 5, 6]) {
+  for (let degree = 1; degree <= 8; degree++) {
     await expect(page.getByRole('button', { name: `Degree ${degree}`, exact: true })).toBeVisible()
   }
-  for (const degree of [4, 7, 8]) {
-    await expect(page.getByRole('button', { name: `Degree ${degree}`, exact: true })).toHaveCount(0)
-  }
+})
+
+test('stars earned before profiles existed are not lost', async ({ page }) => {
+  // Namespacing storage per child would otherwise orphan everything already on the
+  // device, and a child opening the app to find their stars gone is exactly the silent
+  // loss F14 exists to prevent.
+  await page.goto('/')
+  await page.evaluate(() => {
+    localStorage.clear()
+    localStorage.setItem(
+      'music-blocks:progress',
+      JSON.stringify({ staircase: 3, echo: 2, 'which-one': 0, finish: 0, 'name-that': 0 }),
+    )
+  })
+
+  await start(page)
+  await page.getByRole('button', { name: 'Challenges' }).click()
+
+  await expect(page.getByRole('button', { name: /Fill the Staircase/ })).toBeVisible()
+  const migrated = await page.evaluate(() =>
+    localStorage.getItem('music-blocks:one:progress'),
+  )
+  expect(migrated).toContain('"staircase":3')
 })
 
 test('the keyboard bridge shows a full octave with its black-key landmarks', async ({ page }) => {

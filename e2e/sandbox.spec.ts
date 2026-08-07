@@ -15,11 +15,11 @@ async function start(page: Page) {
   await expect(page.getByRole('button', { name: 'Tap to start' })).toBeHidden({ timeout: 30_000 })
 }
 
-test('the staircase opens on the pentatonic, with the rest pad', async ({ page }) => {
+test('the staircase is all there, degree 1 through degree 8', async ({ page }) => {
   await start(page)
-  // Phase 2 defaults to 1-2-3-5-6: with 4 and 7 gone nothing can sound wrong, which is
-  // why Kodaly sequences it before the full scale. All eight is a parent-area setting.
-  for (const degree of [1, 2, 3, 5, 6]) {
+  // The full scale is the default. Pentatonic (1-2-3-5-6) is one tap away in the
+  // parent area for when nothing should be able to sound wrong.
+  for (let degree = 1; degree <= 8; degree++) {
     await expect(page.getByRole('button', { name: `Degree ${degree}`, exact: true })).toBeVisible()
   }
   await expect(page.getByRole('button', { name: 'Rest', exact: true })).toBeVisible()
